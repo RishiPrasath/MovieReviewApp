@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
+import ViewPropTypes from 'deprecated-react-native-prop-types';
 const Home = () => {
   const navigation = useNavigation();
 

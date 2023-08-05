@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import Register from './Register'; // Replace this import with the actual path to your Register component
+import ViewPropTypes from 'deprecated-react-native-prop-types';
+
+
+
 
 const Login = () => {
   const [email, setEmail] = useState('');

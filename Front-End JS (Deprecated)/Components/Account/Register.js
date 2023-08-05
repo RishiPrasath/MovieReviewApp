@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-
+import ViewPropTypes from 'deprecated-react-native-prop-types';
 const Register = ({ onClose }) => { // Accept the 'onClose' prop to handle modal close event
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

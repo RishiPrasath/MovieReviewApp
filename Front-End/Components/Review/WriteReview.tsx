@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import StarRating from 'react-native-star-rating'; // Import the star rating component
-import { Picker } from '@react-native-picker/picker'; // Import the new Picker component
+import StarRating from 'react-native-star-rating';
+import { Picker } from '@react-native-picker/picker';
+import { WriteReviewProps, BasicAspectRatings, ReviewData } from './types'; // Import the types
 
-const WriteReview = ({ onClose }) => {
+const WriteReview: React.FC<WriteReviewProps> = ({ onClose }) => {
   const [reviewText, setReviewText] = useState('');
-  const [basicAspectRatings, setBasicAspectRatings] = useState({
+  const [basicAspectRatings, setBasicAspectRatings] = useState<BasicAspectRatings>({
     story: 3,
     characters: 3,
     screenplay: 3,
     casting: 3,
   });
-  const [additionalAspects, setAdditionalAspects] = useState([]);
-  const [selectedAspect, setSelectedAspect] = useState('');
+  const [additionalAspects, setAdditionalAspects] = useState<string[]>([]);
+  const [selectedAspect, setSelectedAspect] = useState<string>('');
 
-  const handleBasicAspectRatingChange = (aspect, rating) => {
+  const handleBasicAspectRatingChange = (aspect: keyof BasicAspectRatings, rating: number) => {
     setBasicAspectRatings({ ...basicAspectRatings, [aspect]: rating });
   };
 
@@ -25,22 +26,20 @@ const WriteReview = ({ onClose }) => {
     }
   };
 
-  const handleRemoveAspect = (aspect) => {
+  const handleRemoveAspect = (aspect: string) => {
     const updatedAspects = additionalAspects.filter((item) => item !== aspect);
     setAdditionalAspects(updatedAspects);
   };
 
   const handleSaveReview = () => {
-    // Here, you can handle saving the review data to your backend or store it locally
-    // For now, we'll just log the data
-    const reviewData = {
-      reviewText,
-      basicAspectRatings,
+    const reviewData: ReviewData = {
+      username: 'John Doe', // You can get the username from user input
+      review: reviewText,
+      ratings: basicAspectRatings,
       additionalAspectRatings: {}, // You can implement this as needed
     };
     console.log(reviewData);
 
-    // Close the WriteReview modal
     onClose();
   };
 
@@ -48,7 +47,6 @@ const WriteReview = ({ onClose }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Write Your Review</Text>
 
-      {/* Review Text */}
       <TextInput
         style={styles.reviewInput}
         placeholder="Write your review here..."
@@ -57,52 +55,26 @@ const WriteReview = ({ onClose }) => {
         onChangeText={setReviewText}
       />
 
-      {/* Basic Aspects Rating */}
       <Text style={styles.aspectTitle}>Rate the Basic Aspects (1-5 stars):</Text>
       <View style={styles.aspectContainer}>
-        <Text>Story:</Text>
-        <StarRating
-          disabled={false}
-          maxStars={5}
-          rating={basicAspectRatings.story}
-          selectedStar={(rating) => handleBasicAspectRatingChange('story', rating)}
-          fullStarColor="gold"
-        />
-      </View>
-      <View style={styles.aspectContainer}>
-        <Text>Characters:</Text>
-        <StarRating
-          disabled={false}
-          maxStars={5}
-          rating={basicAspectRatings.characters}
-          selectedStar={(rating) => handleBasicAspectRatingChange('characters', rating)}
-          fullStarColor="gold"
-        />
-      </View>
-      <View style={styles.aspectContainer}>
-        <Text>Screenplay:</Text>
-        <StarRating
-          disabled={false}
-          maxStars={5}
-          rating={basicAspectRatings.screenplay}
-          selectedStar={(rating) => handleBasicAspectRatingChange('screenplay', rating)}
-          fullStarColor="gold"
-        />
-      </View>
-      <View style={styles.aspectContainer}>
-        <Text>Casting:</Text>
-        <StarRating
-          disabled={false}
-          maxStars={5}
-          rating={basicAspectRatings.casting}
-          selectedStar={(rating) => handleBasicAspectRatingChange('casting', rating)}
-          fullStarColor="gold"
-        />
+        {/* Basic Aspect Ratings */}
+        {Object.keys(basicAspectRatings).map((aspect) => (
+          <View key={aspect} style={styles.singleAspect}>
+            <Text>{aspect}:</Text>
+            <StarRating
+              disabled={false}
+              maxStars={5}
+              rating={basicAspectRatings[aspect as keyof BasicAspectRatings]}
+              selectedStar={(rating) => handleBasicAspectRatingChange(aspect as keyof BasicAspectRatings, rating)}
+              fullStarColor="gold"
+            />
+          </View>
+        ))}
       </View>
 
-      {/* Additional Aspects Rating */}
       <Text style={styles.aspectTitle}>Rate Additional Aspects (1-5 stars):</Text>
       <View style={styles.additionalAspectContainer}>
+        {/* Additional Aspect Ratings */}
         {additionalAspects.map((aspect) => (
           <View key={aspect} style={styles.additionalAspect}>
             <Text>{aspect}:</Text>
@@ -138,7 +110,6 @@ const WriteReview = ({ onClose }) => {
         </View>
       </View>
 
-      {/* Save Review Button */}
       <TouchableOpacity style={styles.saveReviewButton} onPress={handleSaveReview}>
         <Text style={styles.buttonText}>Save Review</Text>
       </TouchableOpacity>
@@ -147,8 +118,6 @@ const WriteReview = ({ onClose }) => {
 };
 
 const styles = StyleSheet.create({
-  // ... Rest of the styles ...
-
   container: {
     flex: 1,
     padding: 16,
@@ -173,6 +142,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   aspectContainer: {
+    marginBottom: 16,
+  },
+  singleAspect: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,

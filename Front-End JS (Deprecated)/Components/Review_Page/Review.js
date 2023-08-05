@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Modal } from 'react-native';
 import WriteReview from './WriteReview'; // Import the WriteReview component
-
+import ViewPropTypes from 'deprecated-react-native-prop-types';
 const Review = () => {
   const [showReviewModal, setShowReviewModal] = useState(true); // Set it to true initially
 

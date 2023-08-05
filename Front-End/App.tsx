@@ -1,19 +1,17 @@
 import React from 'react';
-import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { TabNavigationParamList } from './types'; // Import the type
 
-// Import your screen components
-import Home from './Components/Home_Page/Home';
-import Search from './Components/Search_Page/Search';
+import Home from './Components/Home/Home';
+import Search from './Components/Search/Search';
 import Login from './Components/Account/Login';
-import Register from './Components/Account/Register';
-import Review from './Components/Review_Page/Review';
-import WriteReview from './Components/Review_Page/WriteReview';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Review from './Components/Review/Review';
 
-const Tab = createBottomTabNavigator();
+
+const Tab = createBottomTabNavigator<TabNavigationParamList>();
 const Stack = createStackNavigator();
 
 const MainTabs = () => {
@@ -22,7 +20,7 @@ const MainTabs = () => {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName;
+          let iconName: keyof typeof Ionicons.glyphMap | undefined;
 
           if (route.name === 'Home') {
             iconName = 'home';
@@ -43,20 +41,19 @@ const MainTabs = () => {
     >
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="Search" component={Search} />
-      {/* Pass the 'navigation' prop to the 'Login' component */}
       <Tab.Screen name="Account" component={Login} />
     </Tab.Navigator>
   );
 };
 
-const App = () => {
+const App: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen name="Register" component={Register} />
+        {/* <Stack.Screen name="Register" component={Register} />
+        <Stack.Screen name="WriteReview" component={WriteReview} /> */}
         <Stack.Screen name="Review" component={Review} />
-        <Stack.Screen name="WriteReview" component={WriteReview} />
       </Stack.Navigator>
     </NavigationContainer>
   );
