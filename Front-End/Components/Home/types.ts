@@ -1,10 +1,19 @@
 import { RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
+export type MovieData = {
+  movieID: number;
+  title: string;
+  director: string[];
+  cast: string[];
+  releaseDate: string;
+  poster_path: string;
+};
+
 // Define your screens and their respective params here
 export type RootStackParamList = {
   Home: undefined;
-  Review: undefined;
+  Review: { movieId: number}; // Define the parameter type here
 };
 
 // Create individual route prop and navigation prop types for each screen

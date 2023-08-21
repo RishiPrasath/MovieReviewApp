@@ -1,3 +1,19 @@
+export type RootStackParamList = {
+  Home: undefined;
+  Review: { movieId: number }; // Define the parameter type here
+};
+
+
+export type MovieDetails = {
+  title: string;
+  directors: string[];
+  cast: string[];
+  release_date: string;
+  poster_path: string;
+};
+
+
+
 export type ReviewData = {
   username: string;
   review: string;

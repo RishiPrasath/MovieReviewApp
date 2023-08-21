@@ -51,8 +51,6 @@ const App: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="MainTabs" component={MainTabs} />
-        {/* <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="WriteReview" component={WriteReview} /> */}
         <Stack.Screen name="Review" component={Review} />
       </Stack.Navigator>
     </NavigationContainer>

@@ -1,20 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Modal } from 'react-native';
 import WriteReview from './WriteReview';
 import { ReviewData } from './types'; // Import the type
+import { MovieDetails } from './types'; // Import the type
 
-const Review: React.FC = () => {
+
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from './types';
+
+type ReviewScreenRouteProp = RouteProp<RootStackParamList, 'Review'>;
+type ReviewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Review'>;
+
+type Props = {
+  route: ReviewScreenRouteProp;
+  navigation: ReviewScreenNavigationProp;
+};
+
+const Review: React.FC<Props> = ({ route }) => {
   const [showReviewModal, setShowReviewModal] = useState(true);
 
-  const movieDetails = {
-    title: 'Top Gun Maverick',
-    director: 'Director Name',
-    cast: 'Cast Members',
-    releaseDate: 'Release Date',
-    poster: 'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcSu_HQf7Sgkij6NptUWlEKf6V9n5bC5cL1JfGFNylGC8VnfN_-N',
-  };
-
+  
   const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
+
+
+  const [errorText, setErrorText] = useState(''); // Add errorText state variable
+  
+  const [movieDetails, setMovieDetails] = useState<MovieDetails | null>(null);
+
+  useEffect(() => {
+      // Extract the movieId from the route params
+    const movieId = route.params.movieId;
+
+    console.log("Movie ID: ", movieId);
+    
+
+    // Construct the API endpoint using the movieId
+    const movieEndpoint = `http://192.168.0.152:4000/review/${movieId}`;
+
+    // Make the API request
+    fetch(movieEndpoint)
+      .then(response => response.json())
+      .then(data => {
+        // Update your state/variable with the retrieved movie details
+        console.log('Movie details:', data);
+        
+        setMovieDetails(data);
+      })
+      .catch(error => {
+        // Handle API request error
+        console.error('Error fetching movie details:', error);
+        setErrorText('An error occurred while fetching movie details.');
+      });
+
+      // Clean up any resources when the component unmounts
+      return () => {
+        // Cancel any pending API requests or perform other cleanup tasks
+      };
+
+
+
+
+  }, []);
+
 
   const handleWriteReview = () => {
     setShowWriteReviewModal(true);
@@ -24,13 +72,7 @@ const Review: React.FC = () => {
     setShowWriteReviewModal(false);
   };
 
-  const handleBackGesture = () => {
-    if (showWriteReviewModal) {
-      handleWriteReviewClose();
-    } else {
-      setShowReviewModal(false);
-    }
-  };
+  
 
   const calculateAverageScore = (ratings: ReviewData['ratings']) => {
     const aspectCount = Object.keys(ratings).length;
@@ -66,14 +108,39 @@ const Review: React.FC = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Image source={{ uri: movieDetails.poster }} style={styles.moviePoster} />
+      {movieDetails ? (
+        <>
+          <Image source={{ uri: movieDetails.poster_path }} style={styles.moviePoster} />
 
-      <View style={styles.detailsContainer}>
-        <Text style={styles.title}>{movieDetails.title}</Text>
-        <Text>Director: {movieDetails.director}</Text>
-        <Text>Cast: {movieDetails.cast}</Text>
-        <Text>Release Date: {movieDetails.releaseDate}</Text>
-      </View>
+          <View style={styles.detailsContainer}>
+  <Text style={styles.title}>{movieDetails.title}</Text>
+  
+  <View style={styles.detailSection}>
+    <Text style={styles.detailHeading}>Directors:</Text>
+    <Text style={styles.detailText}>
+      {movieDetails.directors.length > 0
+        ? movieDetails.directors.join(', ')
+        : 'N/A'}
+    </Text>
+  </View>
+  
+  <View style={styles.detailSection}>
+    <Text style={styles.detailHeading}>Cast:</Text>
+    <Text style={styles.detailText}>
+      {movieDetails.cast.length > 0
+        ? movieDetails.cast.join(', ')
+        : 'N/A'}
+    </Text>
+  </View>
+  
+  <Text style={styles.releaseDate}>
+    Release Date: {movieDetails.release_date}
+  </Text>
+</View>
+        </>
+      ) : (
+        <Text style={styles.errorText}>Movie details not available.</Text>
+      )}
 
       <TouchableOpacity style={styles.writeReviewButton} onPress={handleWriteReview}>
         <Text style={styles.buttonText}>Write Review</Text>
@@ -105,14 +172,37 @@ const Review: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  detailSection: {
+    marginBottom: 8,
+  },
+  detailHeading: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  detailText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  releaseDate: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'red',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
   container: {
     flex: 1,
     padding: 16,
   },
   moviePoster: {
     alignSelf: 'center',
-    width: 200,
-    height: 300,
+    width: 300,
+    height: 500,
     marginVertical: 16,
     resizeMode: 'cover',
   },
