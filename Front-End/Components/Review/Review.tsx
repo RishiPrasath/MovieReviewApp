@@ -1,262 +1,451 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Modal } from 'react-native';
 import WriteReview from './WriteReview';
-import { ReviewData } from './types'; // Import the type
-import { MovieDetails } from './types'; // Import the type
-
-
+import { ReviewData, MovieDetails } from './types'; // Import the necessary types
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from './types';
+import { useUser } from '../UserContext/UserContext';
 
-type ReviewScreenRouteProp = RouteProp<RootStackParamList, 'Review'>;
-type ReviewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Review'>;
+export type ReviewScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Review'>;
+export type ReviewScreenRouteProp = RouteProp<RootStackParamList, 'Review'>;
 
 type Props = {
   route: ReviewScreenRouteProp;
   navigation: ReviewScreenNavigationProp;
 };
 
-const Review: React.FC<Props> = ({ route }) => {
-  const [showReviewModal, setShowReviewModal] = useState(true);
-
+const Review: React.FC<Props> = ({ route, navigation }) => {
+  const { loggedIn, userID ,username } = useUser(); 
+  const [isWriteReviewModalVisible, setIsWriteReviewModalVisible] = useState(false);
   
-  const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
-
-
-  const [errorText, setErrorText] = useState(''); // Add errorText state variable
+  const [isUpdate, setIsUpdate] = useState(false);
   
   const [movieDetails, setMovieDetails] = useState<MovieDetails | null>(null);
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
 
-  useEffect(() => {
-      // Extract the movieId from the route params
-    const movieId = route.params.movieId;
+  const isMovieReleased = movieDetails && new Date(movieDetails.release_date) <= new Date();
 
-    console.log("Movie ID: ", movieId);
-    
+  //Review posted by the user
+  
+  const [userReview, setUserReview] = useState<ReviewData | null>(null);
 
-    // Construct the API endpoint using the movieId
-    const movieEndpoint = `http://192.168.0.152:4000/review/${movieId}`;
-
-    // Make the API request
-    fetch(movieEndpoint)
+  const refreshReviews = () => {
+    const movieid = route.params.movieId;
+    // Fetch reviews from the server
+    const reviewsEndpoint = `http://192.168.0.152:4000/review/getReviews/${movieid}`
+    console.log('Refreshing reviews...', reviewsEndpoint);
+    fetch(reviewsEndpoint)
       .then(response => response.json())
       .then(data => {
-        // Update your state/variable with the retrieved movie details
-        console.log('Movie details:', data);
+        console.log('Refreshed reviews:', data.reviews);
         
-        setMovieDetails(data);
+        // FInd the Review that matches the username
+        const userReview = data.reviews.find((review: ReviewData) => review.Username === username);
+
+        if (userReview) {
+          setIsUpdate(true);
+        }
+
+
+        console.log('User Review:', userReview);
+
+        // If user is logged in, and has reviewed this movie, set the userReview state variable
+        //Also, filter out the user's data.reviews again for reviews that are not the user's
+        // If the user is not logged in, set the userReview state variable to null
+        // Also in this case , add all the reviews to the reviews state variable
+
+        if (loggedIn && userReview) {
+          setUserReview(userReview);
+          setReviews(data.reviews.filter((review: ReviewData) => review.Username !== username));
+        } else {
+          setUserReview(null);
+          setReviews(data.reviews);
+        }
+        
+        
+
       })
       .catch(error => {
-        // Handle API request error
-        console.error('Error fetching movie details:', error);
-        setErrorText('An error occurred while fetching movie details.');
+        console.error('Error refreshing reviews:', error);
       });
+  };
 
-      // Clean up any resources when the component unmounts
-      return () => {
-        // Cancel any pending API requests or perform other cleanup tasks
-      };
+  const fetchMovieDetails = async (movieId: number) => {
+    try {
+      const response = await fetch(`http://192.168.0.152:4000/review/${movieId}`);
+      const data = await response.json();
+      setMovieDetails(data);
+    } catch (error) {
+      console.error('Error fetching movie details:', error);
+    }
+  };
 
 
+  useEffect(() => {
+    console.log('LOADING REVIEW SCREEN');
+
+    // Load movie details
+
+    fetchMovieDetails(route.params.movieId);
+
+    // Load reviews
+
+    refreshReviews();
+
+    
+  
+  }, [route.params.movieId, loggedIn, userID]);
 
 
-  }, []);
 
 
   const handleWriteReview = () => {
-    setShowWriteReviewModal(true);
+    setIsWriteReviewModalVisible(true);
   };
 
   const handleWriteReviewClose = () => {
-    setShowWriteReviewModal(false);
+    setIsWriteReviewModalVisible(false);
   };
 
-  
 
-  const calculateAverageScore = (ratings: ReviewData['ratings']) => {
-    const aspectCount = Object.keys(ratings).length;
-    const totalScore = Object.values(ratings).reduce((acc, cur) => acc + cur, 0);
-    return totalScore / aspectCount;
+  // When the user clicks the "Update Review" button
+  const handleUpdateReview = () => {
+    if (userReview) {
+      // Open the Write Review modal, and pass the user's review data to it
+      setIsWriteReviewModalVisible(true);
+    }
   };
-
-  const otherUsersReviews: ReviewData[] = [
-    {
-      username: 'User1',
-      review: 'This movie was fantastic! I loved the action scenes and the thrilling plot.',
-      ratings: {
-        story: 5,
-        characters: 5,
-        screenplay: 5,
-        casting: 5,
-      },
-      additionalAspectRatings: {},
-    },
-    {
-      username: 'User2',
-      review: 'I enjoyed the movie, but I wish the characters had more depth.',
-      ratings: {
-        story: 4,
-        characters: 3,
-        screenplay: 4,
-        casting: 4,
-      },
-      additionalAspectRatings: {},
-    },
-    // Add more sample reviews as needed
-  ];
+ 
 
   return (
     <ScrollView style={styles.container}>
       {movieDetails ? (
         <>
-          <Image source={{ uri: movieDetails.poster_path }} style={styles.moviePoster} />
-
+          <Image
+            style={styles.moviePoster}
+            source={{ uri: movieDetails.poster_path }}
+          />
+  
           <View style={styles.detailsContainer}>
-  <Text style={styles.title}>{movieDetails.title}</Text>
+            <View style={styles.detailSection}>
+              <Text style={styles.movieTitleHeading}>{movieDetails.title}</Text>
+              {/* ... Other movie details ... */}
+              <Text style={styles.detailHeading}>Release Date:</Text>
+              <Text style={styles.releaseDate}>{movieDetails.release_date}</Text>
   
-  <View style={styles.detailSection}>
-    <Text style={styles.detailHeading}>Directors:</Text>
-    <Text style={styles.detailText}>
-      {movieDetails.directors.length > 0
-        ? movieDetails.directors.join(', ')
-        : 'N/A'}
-    </Text>
-  </View>
+              <Text style={styles.detailHeading}>Director:</Text>
+              {movieDetails.directors.map((director, index) => (
+                <Text style={styles.detailText} key={index}>{director}</Text>
+              ))}
   
-  <View style={styles.detailSection}>
-    <Text style={styles.detailHeading}>Cast:</Text>
-    <Text style={styles.detailText}>
-      {movieDetails.cast.length > 0
-        ? movieDetails.cast.join(', ')
-        : 'N/A'}
-    </Text>
-  </View>
+              <Text style={styles.detailHeading}>Cast:</Text>
+              {movieDetails.cast.map((castMember, index) => (
+                <Text style={styles.detailText} key={index}>{castMember}</Text>
+              ))}
   
-  <Text style={styles.releaseDate}>
-    Release Date: {movieDetails.release_date}
-  </Text>
-</View>
+              <Text style={styles.detailHeading}>Genre:</Text>
+              {movieDetails.genres.map((genre, index) => (
+                <Text style={styles.detailText} key={index}>{genre}</Text>
+              ))}
+            </View>
+  
+            {!isMovieReleased && (
+              <Text style={styles.notReleasedText}>
+                This movie will be open for review when released on {movieDetails.release_date}.
+              </Text>
+            )}
+          </View>
         </>
       ) : (
         <Text style={styles.errorText}>Movie details not available.</Text>
       )}
+  
+      {loggedIn ? (
+        <>
+          {userReview && (
+            <View style={styles.userReview}>
+              
+              {/* Display details from userReview */}
+              
+              <Text style={styles.username}>{userReview.Username}</Text>
+              <Text style={styles.reviewText}>{userReview.review}</Text>
+              <View style={styles.ratingsContainer}>
+                <Text style={styles.aspect}>Story: {userReview.ratings.Story}</Text>
+                <Text style={styles.aspect}>Characters: {userReview.ratings.Characters}</Text>
+                <Text style={styles.aspect}>Screenplay: {userReview.ratings.Screenplay}</Text>
+                <Text style={styles.aspect}>Casting: {userReview.ratings.Casting}</Text>
+                {/* Render additional aspect ratings */}
+                {Object.entries(userReview.additionalAspectRatings).map(([aspect, rating]) => (
+                  <Text style={styles.aspect} key={aspect}>{aspect}: {rating}</Text>
+                ))}
 
-      <TouchableOpacity style={styles.writeReviewButton} onPress={handleWriteReview}>
-        <Text style={styles.buttonText}>Write Review</Text>
-      </TouchableOpacity>
+                <View style={styles.finalScoreContainer}>
+                  {/* Calculate final score by average of aspects */}
+                  <Text style={styles.finalScoreText}>
+                    {parseInt(((Object.values(userReview.ratings).reduce((sum, score) => sum + score, 0) +
+                    Object.values(userReview.additionalAspectRatings).reduce((sum, score) => sum + score, 0)) /
+                    (Object.values(userReview.ratings).length + Object.values(userReview.additionalAspectRatings).length)).toFixed(1))} / 5
+                  </Text>
 
-      <Modal visible={showWriteReviewModal} animationType="slide" onRequestClose={handleWriteReviewClose}>
-        <WriteReview onClose={handleWriteReviewClose} />
+                </View>
+
+
+            </View>              
+
+
+
+            </View>
+          )}
+  
+          {userReview ? (
+            <TouchableOpacity
+              style={styles.updateReviewButton}
+              onPress={handleUpdateReview}
+            >
+              <Text style={styles.buttonText}>Update Review</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.writeReviewButton}
+              onPress={handleWriteReview}
+            >
+              <Text style={styles.buttonText}>Write Review</Text>
+            </TouchableOpacity>
+          )}
+        </>
+      ) : (
+        <Text style={styles.loginMessage}>
+          Log in to provide a review for this movie.
+        </Text>
+      )}
+  
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={isWriteReviewModalVisible}
+      >
+        <WriteReview movieId={route.params.movieId} onClose={handleWriteReviewClose} isUpdate={isUpdate} refreshReviews={refreshReviews} ExistingReview={userReview} />
       </Modal>
+  
+      <Text style={styles.userReviewsHeading}>User Reviews</Text>
 
-      {otherUsersReviews.map((review, index) => (
-        <View key={index} style={styles.userReview}>
-          <View style={styles.userReviewHeader}>
-            <Text style={styles.username}>{review.username}</Text>
-          </View>
-          <Text style={styles.reviewText}>{review.review}</Text>
+      <View style={styles.userReviewsContainer}>
+          
+          {reviews.length > 0 ? (
+            reviews.map((review, index) => {
+              const basicAspectScores = Object.values(review.ratings);
+              const additionalAspectScores = Object.values(review.additionalAspectRatings);
+              const sumOfScores = basicAspectScores.reduce((sum, score) => sum + score, 0) +
+                additionalAspectScores.reduce((sum, score) => sum + score, 0);
+              const totalAspects = basicAspectScores.length + additionalAspectScores.length;
 
-          <Text>Story: {review.ratings.story}</Text>
-          <Text>Characters: {review.ratings.characters}</Text>
-          <Text>Screenplay: {review.ratings.screenplay}</Text>
-          <Text>Casting: {review.ratings.casting}</Text>
+              const finalScore = parseInt((sumOfScores / totalAspects).toFixed(1));
 
-          <View style={styles.finalScoreContainer}>
-            <Text style={styles.finalScoreText}>{calculateAverageScore(review.ratings)}/5</Text>
-          </View>
-        </View>
-      ))}
-    </ScrollView>
-  );
-};
+              return (
+                
+                <View key={index} style={styles.userReview}>
+                  
+                  <Text style={styles.username}>{review.Username}</Text>
+                  <Text style={styles.reviewText}>{review.review}</Text>
+                  <View style={styles.ratingsContainer}>
+                    <Text style={styles.aspect}>Story: {review.ratings.Story}</Text>
+                    <Text style={styles.aspect}>Characters: {review.ratings.Characters}</Text>
+                    <Text style={styles.aspect}>Screenplay: {review.ratings.Screenplay}</Text>
+                    <Text style={styles.aspect}>Casting: {review.ratings.Casting}</Text>
+                    {/* Render additional aspect ratings */}
+                    {Object.entries(review.additionalAspectRatings).map(([aspect, rating]) => (
+                      <Text style={styles.aspect} key={aspect}>{aspect}: {rating}</Text>
+                    ))}
+                  </View>
+                  {/* Display the final score */}
+                  <View style={styles.finalScoreContainer}>
+                    <Text style={styles.finalScoreText}>{finalScore} / 5</Text>
+                  </View>
+                </View>
+              );
+            })
+            // If user has reviewed, but no other reviews are available
+          ) : userReview ? (
+            <Text style={styles.noReviewsText}>You are the first person to review this movie!</Text>
+            // If user has not reviewed, and no other reviews are available
+          ) : (
+            <Text style={styles.noReviewsText}>No reviews available.</Text>
+          )}
+      </View>
 
-const styles = StyleSheet.create({
-  detailSection: {
-    marginBottom: 8,
-  },
-  detailHeading: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  detailText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  releaseDate: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'red',
-    textAlign: 'center',
-    marginVertical: 20,
-  },
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  moviePoster: {
-    alignSelf: 'center',
-    width: 300,
-    height: 500,
-    marginVertical: 16,
-    resizeMode: 'cover',
-  },
-  detailsContainer: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  writeReviewButton: {
-    backgroundColor: 'blue',
-    padding: 12,
-    borderRadius: 8,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  userReview: {
-    marginBottom: 20,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 5,
-  },
-  userReviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  username: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  reviewText: {
-    marginBottom: 8,
-  },
-  finalScoreContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  finalScoreText: {
-    fontWeight: 'bold',
-    fontSize: 24,
-  },
-});
+            </ScrollView>
+          );
+
+        };
+
+        const styles = StyleSheet.create({
+          yourReviewHeading: {
+            fontSize: 30,
+            fontWeight: 'bold',
+            marginBottom: 8,
+            textAlign: 'center',
+            color: 'white',
+          },
+          updateReviewButton:{
+            backgroundColor: 'rgb(59, 72, 171)', // Lighter Blue
+            padding: 16,
+            borderRadius: 8,
+            alignSelf: 'center',
+            marginBottom: 16,
+          },
+          noReviewsText:{
+            fontSize: 18,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            color: 'black',
+            marginTop: 16,
+            marginBottom: 16,
+          },
+          moviePoster: {
+            alignSelf: 'center',
+            width: 300,
+            height: 500,
+            marginVertical: 16,
+            resizeMode: 'cover',
+          },
+          detailSection: {
+            marginBottom: 8,
+          },
+          detailHeading: {
+            fontWeight: 'bold',
+            fontSize: 30,
+            textAlign: 'center',
+            color: 'rgb(120, 122, 145)',
+          },
+          detailText: {
+            fontSize: 16,
+            textAlign: 'center',
+            color: 'white',
+          },
+          releaseDate: {
+            fontSize: 16,
+            textAlign: 'center',
+            color: 'white',
+          },
+          userReview: {
+            marginBottom: 20,
+            padding: 10,
+            borderWidth: 1,
+            borderColor: 'gray',
+            borderRadius: 15,
+            backgroundColor: 'rgb(15, 4, 76)',
+          },
+
+          notReleasedText: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            color: 'rgb(241, 246, 249)',
+            marginTop: 16,
+          },
+
+          username: {
+            fontWeight: 'bold',
+            fontSize: 30,
+            marginBottom: 8,
+            color: 'white',
+            textAlign: 'center',
+          },
+          reviewText: {
+            textAlign: 'center',
+            fontSize: 16,
+            marginBottom: 8,
+            color: 'white',
+          },
+          ratingsContainer: {
+            alignItems: 'center',
+            marginTop: 8,
+            marginLeft: 0,
+            textAlign: 'center',
+          },
+          aspect: {
+            fontSize: 25,
+            marginBottom: 8,
+            color: 'rgb(120, 122, 145)',
+          },
+          userReviewsContainer: {
+            marginBottom: 16,
+          },
+          userReviewsHeading: {
+            marginTop: 16,
+            fontSize: 30,
+            fontWeight: 'bold',
+            marginBottom: 8,
+            textAlign: 'center',
+          },
+          finalScoreContainer: {
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 16,
+          },
+          finalScoreText: {
+            fontWeight: 'bold',
+            fontSize: 30,
+            color: 'white',
+          },
+          loginMessage: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginVertical: 20,
+          },
+          errorText: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: 'red',
+            textAlign: 'center',
+            marginVertical: 20,
+          },
+          container: {
+            flex: 1,
+            padding: 16,
+          },
+
+          movieTitleHeading: {
+            fontSize: 40,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            color: 'white',
+            marginBottom: 8,
+          },
+
+          detailsContainer: {
+            marginBottom: 16,
+            backgroundColor: 'rgb(20, 30, 97)',
+            borderRadius: 15,
+            padding: 16,
+          },
+          title: {
+            fontSize: 24,
+            fontWeight: 'bold',
+            marginBottom: 16,
+            textAlign: 'center',
+          },
+          writeReviewButton: {
+            backgroundColor: 'rgb(59, 72, 171)', // Lighter Blue
+            padding: 16,
+            borderRadius: 8,
+            alignSelf: 'center',
+            marginBottom: 16,
+          },
+          buttonText: {
+            color: 'white',
+            fontSize: 22,
+            fontWeight: 'bold',
+            textAlign: 'center',
+          },
+          userReviewHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 8,
+          },
+        });
 
 export default Review;

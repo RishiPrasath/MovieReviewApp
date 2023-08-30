@@ -2,6 +2,14 @@ const express = require('express');
 
 const router = express.Router();
 
+const { MongoClient } = require('mongodb');
+
+// MongoDB connection string
+const uri = 'mongodb+srv://MovieReviewApp:review@cluster0.evmmugl.mongodb.net/';
+
+// Create a new MongoClient
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
 router.get('/:movieID', async (req, res) => {
   try {
     const { movieID } = req.params;
@@ -45,6 +53,7 @@ router.get('/:movieID', async (req, res) => {
 
     // Construct movie details object
     const movieDetails = {
+      id: movieData.id,
       title: movieData.title,
       release_date: movieData.release_date,
       poster_path: `https://image.tmdb.org/t/p/original/${movieData.poster_path}`,
@@ -64,41 +73,135 @@ router.get('/:movieID', async (req, res) => {
 
 // Route to submit a review
 router.post('/submitReview', (req, res) => {
-    console.log("/submitReview");
-    const { userID, movieID, reviewData } = req.body;
+  console.log("/submitReview");
 
-  // Save the review data to your database
-  // ...
+  // Get the review data JSON object
+  const reviewData = req.body;
 
-  // Send a success response
-  // res.json({ success: true });
-  res.json({ success: false });
+  console.log(reviewData);
+
+  // Access the "MovieReviewApp" database
+  const db = client.db('MovieReviewApp');
+
+  // Access the "Reviews" collection
+  const reviewsCollection = db.collection('Reviews');
+
+  // Insert the review data into the collection
+  reviewsCollection.insertOne(reviewData)
+    .then(() => {
+      console.log('Review data inserted successfully');
+      res.json({ success: true });
+    })
+    .catch(error => {
+      console.error('Error inserting review data:', error);
+      res.status(500).json({ success: false, error: 'An error occurred' });
+    });
 });
+
 
 // Route to check if a user has reviewed a movie
 router.post('/reviewExists', (req, res) => {
-    console.log("/reviewExists");
-    const { userID, movieID } = req.body;
+  console.log("/reviewExists");
+  console.log(req.body);
+  
+  const movie_Id = req.body.movieId;
+  const user_ID = req.body.userid;
 
-  // Check if a review exists in your database for the given userID and movieID
-  // ...
 
-  // Send the result as a response
-  // res.json({ reviewExists: review !== null });
-  res.json({ reviewExists: false });
+  console.log("Movie ID: " + movie_Id);
+  console.log("User ID: " + user_ID);
+
+  // Access the "MovieReviewApp" database
+  const db = client.db('MovieReviewApp');
+
+  // Access the "Reviews" collection
+  const reviewsCollection = db.collection('Reviews');
+
+  // Check if a review exists for the given user ID and movie ID
+  reviewsCollection.findOne({ userID: user_ID, movieid : movie_Id })
+    .then(review => {
+      if (review) {
+        console.log('Review exists');
+        res.json({ exists: true, review }); // Return the review document
+      } else {
+        console.log('Review does not exist');
+        res.json({ exists: false });
+      }
+    })
+    .catch(error => {
+      console.error('Error checking if review exists:', error);
+      res.status(500).json({ error: 'An error occurred' });
+    });
 });
+
+
+
+
+// Route to get all reviews for a movie (by movie ID)
+
+router.get('/getReviews/:movieID', (req, res) => {
+  console.log("/getReviews");
+
+  console.log(req.params)
+
+  //get the key movieID from params
+
+  const movieID = parseInt( req.params.movieID);
+
+
+  // Access the "MovieReviewApp" database
+  const db = client.db('MovieReviewApp');
+
+  // Access the "Reviews" collection
+  const reviewsCollection = db.collection('Reviews');
+
+  // Get all reviews for the movie
+  // movieid (Field from mongoDb document) = movieID (variable from params)
+
+  reviewsCollection.find({ movieid: movieID }).toArray()
+    .then(reviews => {
+      console.log(reviews);
+      res.json({ reviews });
+    }
+    )
+    .catch(error => {
+      console.error('Error getting reviews:', error);
+      res.status(500).json({ error: 'An error occurred' });
+    });
+
+
+});
+
+
+
+
 
 // Route to update a review
-router.put('/updateReview', (req, res) => {
-    const { userID, movieID, updatedReviewData } = req.body;
-    console.log("/updateReview");
-  // Update the review data in your database based on userID and movieID
-  // ...
+router.post('/updateReview', async (req, res) => {
+  try {
+    const updatedReviewData = req.body;
 
-  // Send a success response
-  // res.json({ success: true });
-  res.json({ success: false });
+    // Access the "MovieReviewApp" database
+    const db = client.db('MovieReviewApp');
+
+    // Access the "Reviews" collection
+    const reviewsCollection = db.collection('Reviews');
+
+    // Update the review data in the collection
+    await reviewsCollection.updateOne(
+      { userID: updatedReviewData.userID, movieid: updatedReviewData.movieid },
+      { $set: updatedReviewData }
+    );
+
+    console.log('Review data updated successfully');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating review data:', error);
+    res.status(500).json({ success: false, error: 'An error occurred' });
+  }
 });
+
+
 
 
 

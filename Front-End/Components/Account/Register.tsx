@@ -3,39 +3,69 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { RegisterProps } from './types'; // Import the type for RegisterProps
 
 const Register: React.FC<RegisterProps> = ({ onClose }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleEmailChange = (text: string) => {
-    setEmail(text);
+
+  const handleUsernameChange = (text: string) => {
+    setUsername(text);
   };
 
   const handlePasswordChange = (text: string) => {
     setPassword(text);
   };
 
-  const handleRegister = () => {
-    // Implement the registration process here (e.g., using Firebase Authentication)
-    // After registration is successful, close the modal
-    onClose();
+  const handleRegister = async () => {
+    console.log('Registering user:', username, password);
+    try {
+      const response = await fetch(`http://192.168.0.152:4000/account/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+  
+      if (response.ok) {
+        // Registration successful, you can handle the success scenario here
+        onClose(); // Close the registration modal
+      } else {
+        // Registration failed, handle error scenario
+        const errorData = await response.json();
+        console.log('Registration error:', errorData.message);
+        // You can display an error message to the user here
+        setErrorMessage(errorData.message);
+      }
+    } catch (error) {
+      // Handle network error
+      console.error('Network error:', error);
+      // You can display a network error message to the user here
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
+      {/* ... other input fields */}
+
       <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={handleEmailChange}
         style={styles.input}
+        placeholder="Username"
+        value={username}
+        onChangeText={handleUsernameChange}
       />
       <TextInput
+        style={styles.input}
         placeholder="Password"
-        secureTextEntry
         value={password}
         onChangeText={handlePasswordChange}
-        style={styles.input}
+        secureTextEntry
       />
+
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
       <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
@@ -44,6 +74,11 @@ const Register: React.FC<RegisterProps> = ({ onClose }) => {
 };
 
 const styles = StyleSheet.create({
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    marginTop: 10,
+  },
   container: {
     flex: 1,
     padding: 16,

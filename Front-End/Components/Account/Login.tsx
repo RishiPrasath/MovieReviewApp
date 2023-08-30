@@ -1,68 +1,91 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal } from 'react-native';
-import { RegisterProps } from './types'; // Import the type for RegisterProps
+import { useUser } from '../UserContext/UserContext'; // Import the useUser hook
 import Register from './Register'; // Import the Register component
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { loggedIn, login, logout } = useUser(); // Use the loggedIn and login functions from the context
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null); // State to store login error message
 
-  const handleEmailChange = (text: string) => {
-    setEmail(text);
+  const handleLogin = async () => {
+    try {
+      // Send a POST request to the server with the login credentials
+      const response = await fetch('http://192.168.0.152:4000/account/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        // Call the login function with both userID and username
+        login(user.id, user.username); // Modify this line
+      } else {
+        // Handle login failure by setting error message
+        setLoginError('Invalid username or password');
+      }
+    } catch (error) {
+      // Handle network error or other issues
+      console.error('Login error:', error);
+      setLoginError('An error occurred while logging in');
+    }
   };
 
-  const handlePasswordChange = (text: string) => {
-    setPassword(text);
-  };
-
-  const handleLogin = () => {
-    // Implement the login process here (e.g., using Firebase Authentication)
-    console.log('Email:', email);
-    console.log('Password:', password);
-  };
-
-  const handleRegister = () => {
-    // Show the Register modal
-    setShowRegisterModal(true);
-  };
-
-  const handleRegisterClose = () => {
-    // Close the Register modal
-    setShowRegisterModal(false);
+  const handleLogout = () => {
+    // Simulate a logout process
+    logout();
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={handleEmailChange}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={handlePasswordChange}
-        style={styles.input}
-      />
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
+      {loggedIn ? (
+        // Display username and logout button if logged in
+        <>
+          <Text style={styles.title}>Welcome, {username}!</Text>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        // Display login and register fields if not logged in
+        <>
+          <Text style={styles.title}>Login</Text>
+          {loginError && <Text style={styles.errorText}>{loginError}</Text>}
+          <TextInput
+            placeholder="Username"
+            style={styles.input}
+            value={username}
+            onChangeText={setUsername}
+          />
+          <TextInput
+            placeholder="Password"
+            secureTextEntry
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.registerButton} onPress={() => setShowRegisterModal(true)}>
+            <Text style={styles.buttonText}>Register</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
       {/* The Register modal */}
       <Modal
         visible={showRegisterModal}
         animationType="slide"
-        onRequestClose={handleRegisterClose}
+        onRequestClose={() => setShowRegisterModal(false)}
       >
         {/* Render the Register component inside the modal */}
-        <Register onClose={handleRegisterClose} />
+        <Register onClose={() => setShowRegisterModal(false)} />
       </Modal>
     </View>
   );
@@ -77,6 +100,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  errorText: {
+    color: 'red',
     marginBottom: 16,
   },
   input: {
@@ -95,6 +122,13 @@ const styles = StyleSheet.create({
   },
   registerButton: {
     backgroundColor: 'green',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  logoutButton: {
+    backgroundColor: 'red',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
