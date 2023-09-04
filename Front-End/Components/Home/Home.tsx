@@ -27,14 +27,14 @@ const Home: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     console.log('Fetching data...');
     
-    axios.get('http://192.168.0.152:4000/home/new-releases') // Update hostname here
+    axios.get('http://movie-review-app-ruby.vercel.app/home/new-releases') // Update hostname here
       .then(response => {
         console.log('Newly released movies:', response.data);
         setNewlyReleasedMovies(response.data);
       })
       .catch(error => console.error('Error fetching newly released movies:', error));
 
-    axios.get('http://192.168.0.152:4000/home/top-rated') // Update hostname here
+    axios.get('http://movie-review-app-ruby.vercel.app/home/top-rated') // Update hostname here
       .then(response => setTopRatedMovies(response.data))
       .catch(error => console.error('Error fetching top-rated movies:', error));
   }, []);

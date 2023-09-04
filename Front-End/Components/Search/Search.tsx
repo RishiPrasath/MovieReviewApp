@@ -43,7 +43,7 @@ const Search: React.FC = () => {
 
   const fetchSearchResults = async (query: string) => {
     try {
-      const response = await fetch(`http://192.168.0.152:4000/search/searchResults/${encodeURIComponent(query)}`);
+      const response = await fetch(`http://movie-review-app-ruby.vercel.app/search/searchResults/${encodeURIComponent(query)}`);
       const data = await response.json();
       console.log('Search results:', data[0]);
       // Print the fields you need from the data you get back

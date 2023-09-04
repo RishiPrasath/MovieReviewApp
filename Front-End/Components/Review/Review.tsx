@@ -30,10 +30,26 @@ const Review: React.FC<Props> = ({ route, navigation }) => {
   
   const [userReview, setUserReview] = useState<ReviewData | null>(null);
 
+
+  //Function to check if the movie has been released or not
+  //returns true if the movie has been released, false otherwise
+  const checkMovieReleased = (releaseDate: string | undefined) => {
+    if (!releaseDate) {
+      return false; // If releaseDate is not available, consider it as not released
+    }
+    
+    const today = new Date();
+    const release = new Date(releaseDate);
+    return release <= today;
+  };
+  
+  
+
+
   const refreshReviews = () => {
     const movieid = route.params.movieId;
     // Fetch reviews from the server
-    const reviewsEndpoint = `http://192.168.0.152:4000/review/getReviews/${movieid}`
+    const reviewsEndpoint = `http://movie-review-app-ruby.vercel.app/review/getReviews/${movieid}`
     console.log('Refreshing reviews...', reviewsEndpoint);
     fetch(reviewsEndpoint)
       .then(response => response.json())
@@ -73,7 +89,7 @@ const Review: React.FC<Props> = ({ route, navigation }) => {
 
   const fetchMovieDetails = async (movieId: number) => {
     try {
-      const response = await fetch(`http://192.168.0.152:4000/review/${movieId}`);
+      const response = await fetch(`http://movie-review-app-ruby.vercel.app/review/${movieId}`);
       const data = await response.json();
       setMovieDetails(data);
     } catch (error) {
@@ -198,19 +214,29 @@ const Review: React.FC<Props> = ({ route, navigation }) => {
             </View>
           )}
   
-          {userReview ? (
+            {userReview ? (
             <TouchableOpacity
               style={styles.updateReviewButton}
               onPress={handleUpdateReview}
+              disabled={!checkMovieReleased(movieDetails?.release_date)} // Disable the button if movie is not released
             >
-              <Text style={styles.buttonText}>Update Review</Text>
+              <Text style={styles.buttonText}>
+                {checkMovieReleased(movieDetails?.release_date)
+                  ? 'Update Review'
+                  : 'Movie Not Released'}
+              </Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={styles.writeReviewButton}
               onPress={handleWriteReview}
+              disabled={!checkMovieReleased(movieDetails?.release_date)} // Disable the button if movie is not released
             >
-              <Text style={styles.buttonText}>Write Review</Text>
+              <Text style={styles.buttonText}>
+                {checkMovieReleased(movieDetails?.release_date)
+                  ? 'Write Review'
+                  : 'Movie Not Released'}
+              </Text>
             </TouchableOpacity>
           )}
         </>

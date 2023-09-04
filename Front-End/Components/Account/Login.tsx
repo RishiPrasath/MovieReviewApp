@@ -13,7 +13,7 @@ const Login: React.FC = () => {
   const handleLogin = async () => {
     try {
       // Send a POST request to the server with the login credentials
-      const response = await fetch('http://192.168.0.152:4000/account/login', {
+      const response = await fetch('http://movie-review-app-ruby.vercel.app/account/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

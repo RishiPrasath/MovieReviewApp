@@ -95,7 +95,7 @@ const WriteReview: React.FC<WriteReviewProps> = ({ onClose, movieId, refreshRevi
       console.log('Additional Aspect Ratings:', reviewData.additionalAspectRatings);
   
       // Send review to backend
-      fetch('http://192.168.0.152:4000/review/submitReview', {
+      fetch('http://movie-review-app-ruby.vercel.app/review/submitReview', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ const WriteReview: React.FC<WriteReviewProps> = ({ onClose, movieId, refreshRevi
 
     
 
-    fetch('http://192.168.0.152:4000/review/updateReview', {
+    fetch('http://movie-review-app-ruby.vercel.app/review/updateReview', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

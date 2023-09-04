@@ -9,17 +9,30 @@ const Register: React.FC<RegisterProps> = ({ onClose }) => {
 
 
   const handleUsernameChange = (text: string) => {
+
+    // trim off any whitespace from the left and right sides of the string
+    text = text.trim();
+
+    console.log('Username:', text);
+
     setUsername(text);
   };
 
   const handlePasswordChange = (text: string) => {
+
+    // trim off any whitespace from the left and right sides of the string
+    text = text.trim();
+
+    console.log('Password:', text);
+    
+
     setPassword(text);
   };
 
   const handleRegister = async () => {
     console.log('Registering user:', username, password);
     try {
-      const response = await fetch(`http://192.168.0.152:4000/account/register`, {
+      const response = await fetch(`http://movie-review-app-ruby.vercel.app/account/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
