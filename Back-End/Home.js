@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-
+const axios = require('axios');
 
 
 // Helper function to fetch movie details
@@ -21,8 +21,8 @@ const fetchMovieDetails = async (movieIDs) => {
 
   for (const movieID of movieIDs) {
     const movie_url = `${base_url}/movie/${movieID}`;
-    const response = await fetch(movie_url, options);
-    const movieData = await response.json();
+    const response = await axios.get(movie_url, options);
+    const movieData = response.data;
 
     // Extract required details
     const movieDetails = {
@@ -34,8 +34,8 @@ const fetchMovieDetails = async (movieIDs) => {
 
     // Fetch cast members
     const credits_url = `${base_url}/movie/${movieID}/credits`;
-    const creditsResponse = await fetch(credits_url, options);
-    const creditsData = await creditsResponse.json();
+    const creditsResponse = await axios.get(credits_url, options);
+    const creditsData = creditsResponse.data;
 
     for (let i = 0; i < 3 && i < creditsData.cast.length; i++) {
       movieDetails.cast.push(creditsData.cast[i].name);
@@ -74,8 +74,8 @@ router.get('/new-releases', async (req, res) => {
   };
 
   try {
-    const response = await fetch(url, options);
-    const data = await response.json();
+    const response = await axios.get(url, options); // Use axios to make GET request
+    const data = response.data;
 
     // Extract movie IDs
     const movieIDs = data.results.map(movie => movie.id);
@@ -98,7 +98,7 @@ router.get('/bookmarked', (req, res) => {
 });
 
 // Route for top rated movies
-router.get('/top-rated', (req, res) => {
+router.get('/top-rated', async(req, res) => {
   const url = 'https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1';
   const options = {
     method: 'GET',
@@ -108,20 +108,22 @@ router.get('/top-rated', (req, res) => {
     }
   };
 
-  fetch(url, options)
-    .then(response => response.json())
-    .then(data => {
-      // Process the data and fetch additional movie details using the helper function
-      const movieIDs = data.results.map(movie => movie.id);
-      return fetchMovieDetails(movieIDs);
-    })
-    .then(movieDetails => {
-      res.json(movieDetails);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      res.status(500).json({ error: 'An error occurred' });
-    });
+  try {
+    const response = await axios.get(url, options); // Use axios to make GET request
+    const data = response.data;
+
+    // Extract movie IDs
+    const movieIDs = data.results.map(movie => movie.id);
+
+    // Fetch movie details using the helper function
+    const moviesData = await fetchMovieDetails(movieIDs);
+
+    // Send the response
+    res.json(moviesData);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'An error occurred' });
+  }
 });
 
 module.exports = router;

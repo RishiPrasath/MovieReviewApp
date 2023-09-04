@@ -1,7 +1,6 @@
 const express = require('express');
-
 const router = express.Router();
-
+const axios  = require('axios')
 const { MongoClient } = require('mongodb');
 
 // MongoDB connection string
@@ -26,13 +25,12 @@ router.get('/:movieID', async (req, res) => {
       Authorization: `Bearer ${api_key}`,
     };
 
-    // Fetch movie details
-    const movieResponse = await fetch(movieUrl, { headers });
-    const movieData = await movieResponse.json();
+    // Use axios to make API requests
+    const movieResponse = await axios.get(movieUrl, { headers });
+    const creditsResponse = await axios.get(creditsUrl, { headers });
 
-    // Fetch credits data
-    const creditsResponse = await fetch(creditsUrl, { headers });
-    const creditsData = await creditsResponse.json();
+    const movieData = movieResponse.data;
+    const creditsData = creditsResponse.data;
 
     console.log(10*"-");
     console.log(creditsUrl);

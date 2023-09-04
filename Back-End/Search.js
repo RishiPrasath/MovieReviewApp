@@ -3,6 +3,7 @@ const router = express.Router();
 
 const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhMDk2YTk2NTZmYTQwZDViNTNiOWI4MGRkZDBhNmRhNiIsInN1YiI6IjY0ZDgyZjMwZjE0ZGFkMDEwMDRjMWE5ZiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.8uPe7Ei7vb184v6OWjaQRY-TPUXPXFenxEcKLg0HuMk";
 
+const axios = require('axios');
 
 //Root route for search (this is for testing purposes) 
 router.get('/', async (req, res) => {
@@ -83,8 +84,8 @@ const fetchMovieDetails = async (movieIDs) => {
   for (const movieID of movieIDs) {
     try {
       const movie_url = `${base_url}/movie/${movieID}`;
-      const response = await fetch(movie_url, options);
-      const movieData = await response.json();
+      const response = await axios.get(movie_url, config);
+      const movieData = response.data;
 
       // Extract required details
       const movieDetails = {
@@ -95,8 +96,8 @@ const fetchMovieDetails = async (movieIDs) => {
 
       // Fetch cast members
       const credits_url = `${base_url}/movie/${movieID}/credits`;
-      const creditsResponse = await fetch(credits_url, options);
-      const creditsData = await creditsResponse.json();
+      const creditsResponse = await axios.get(credits_url, config);
+      const creditsData = creditsResponse.data;
 
       for (let i = 0; i < 3 && i < creditsData.cast.length; i++) {
         movieDetails.cast.push(creditsData.cast[i].name);
@@ -128,8 +129,8 @@ async function searchMoviesByTitle(query) {
       },
     };
 
-    const searchResponse = await fetch(url, options);
-    const searchData = await searchResponse.json();
+    const searchResponse = await axios.get(url, options);
+    const searchData = searchResponse.data;
 
     if (!searchData.results || searchData.results.length === 0) {
       return [];
@@ -167,12 +168,9 @@ async function searchPeopleByName(query) {
     }
   };
 
-  const response = await fetch(url, options);
-  const data = await response.json();
-  
-
-  //People results
-  const peopleResults = data.results;
+  const searchResponse = await axios.get(url, options);
+  const searchData = searchResponse.data;
+  const peopleResults = searchData.results;
   
   //Filter result to contain only id
   const peopleIDs = peopleResults.map(person => person.id);
@@ -198,16 +196,11 @@ async function searchPeopleByName(query) {
       }
     };
 
-    const response = await fetch(url, options);
-    const data = await response.json();
+    const creditsResponse = await axios.get(url, options);
+    const creditsData = creditsResponse.data;
+    const castCredits = creditsData.cast;
+    const crewCredits = creditsData.crew;
 
-    //cast credits
-
-    const castCredits = data.cast;
-
-    // CREW CREDITS
-
-    const crewCredits = data.crew;
 
 
     //Format the results to contain only the movie ID , poster path and release date
