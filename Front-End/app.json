@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Front-End",
-    "slug": "Front-End",
+    "name": "MovieReviewApp",
+    "slug": "movie-review-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,21 +23,14 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.rishi_prasath.FrontEnd"
+      "package": "com.rishi_prasath.MovieReviewApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "9b5222a5-41d2-484f-ab3f-cc94d33aeb53"
-      }
-    },
     "runtimeVersion": {
       "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/9b5222a5-41d2-484f-ab3f-cc94d33aeb53"
     }
+    
   }
 }

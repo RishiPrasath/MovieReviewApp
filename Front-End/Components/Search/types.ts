@@ -5,7 +5,7 @@ type RootStackParamList = {
   Home: undefined;
   Review: undefined;
   Search: undefined;
-  // ... other screen definitions ...
+  
 };
 
 export type ScreenNavigationProp<RouteName extends keyof RootStackParamList> = StackNavigationProp<
