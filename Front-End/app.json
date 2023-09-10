@@ -15,13 +15,13 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "MovieReviewApp"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+<<<<<<< HEAD
       },
       "package": "com.rishi_prasath.MovieReviewApp"
     },
@@ -30,6 +30,12 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
+=======
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+>>>>>>> parent of 7b6c00d (EAS)
     }
     
   }
