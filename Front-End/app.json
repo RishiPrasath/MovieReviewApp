@@ -21,22 +21,22 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-<<<<<<< HEAD
       },
       "package": "com.rishi_prasath.MovieReviewApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-=======
+    "extra": {
+      "eas": {
+        "projectId": "0a3f9ad1-6ff5-484c-9c35-403a43a938b9"
       }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
->>>>>>> parent of 7b6c00d (EAS)
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0a3f9ad1-6ff5-484c-9c35-403a43a938b9"
     }
-    
   }
 }
